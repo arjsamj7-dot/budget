@@ -1,601 +1,561 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Ledger – Expense Tracker</title>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
-  <style>
-    :root{
-      color-scheme:dark;
-      --bg:#0b0f14;
-      --surface:linear-gradient(180deg,#172233,#0f1721);
-      --grad:linear-gradient(135deg,#0b8a6b,#1d4fb3);
-      --ink:#e6edf5;
-      --muted:#8a98ab;
-      --line:#232e3d;
-      --accent:#34c38f;
-      --accent2:#6ee7b7;
-      --danger:#ff6b6b;
-    }
-    *{box-sizing:border-box}
-    html{scroll-padding-top:env(safe-area-inset-top,0px)}
-    body{
-      margin:0; min-height:100vh;
-      background:linear-gradient(160deg,#080c11 0%,#0d1623 100%) fixed;
-      color:var(--ink); font:400 16px/1.5 Inter,system-ui,sans-serif;
-    }
-    .wrap{max-width:920px;margin:0 auto;padding:24px 16px 48px}
-    h1,h2,.big{font-family:Inter,system-ui,sans-serif;margin:0}
-    h1{font-size:1.5rem;color:var(--accent)}
-    header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
-    .month{display:flex;align-items:center;gap:8px}
-    .month button{
-      width:38px;height:38px;border-radius:50%;border:0;
-      background:var(--grad);color:#fff;cursor:pointer;font-size:1.1rem
-    }
-    .month span{min-width:130px;text-align:center;font-weight:600}
-    .total{
-      background:var(--grad);color:#fff;border-radius:14px;padding:24px;margin-bottom:16px
-    }
-    .total .big{font-size:clamp(2.4rem,9vw,3.6rem);font-weight:700;line-height:1.1}
-    .total p{margin:4px 0 0;opacity:.92}
-    .bar{height:10px;border-radius:5px;background:rgba(255,255,255,.25);overflow:hidden;margin-top:14px}
-    .bar i{display:block;height:100%;background:#fff;width:0;transition:width .3s}
-    .grid{display:grid;grid-template-columns:1fr 1.2fr;gap:16px;align-items:start}
-    @media(max-width:760px){.grid{grid-template-columns:1fr}}
-    .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px}
-    .card h2{font-size:1.05rem;margin-bottom:12px}
-    .hint{color:var(--muted);font-size:.85rem;margin:-6px 0 12px}
-    .field{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
-    .field label{font-size:.85rem;color:var(--muted)}
-    input,select{
-      font:inherit;color:var(--ink);background:var(--bg);
-      border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%
-    }
-    input[type=color]{padding:2px;height:42px;width:56px;cursor:pointer}
-    :focus-visible{outline:3px solid var(--accent2);outline-offset:2px}
-    .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    .primary{
-      width:100%;background:var(--grad);color:#fff;border:0;border-radius:10px;
-      padding:12px;font:600 1rem Inter,sans-serif;cursor:pointer
-    }
-    .crow{padding:12px 0;border-top:1px solid var(--line)}
-    .crow:first-of-type{border-top:0}
-    .ctop{display:flex;align-items:center;gap:10px}
-    .dot{width:14px;height:14px;border-radius:50%;flex:none}
-    .cname{flex:1;font-weight:600;overflow-wrap:anywhere}
-    .cspent{font-variant-numeric:tabular-nums;font-size:.9rem}
-    .cbud{width:92px;padding:6px 8px;text-align:right}
-    .del{border:0;background:none;color:var(--danger);cursor:pointer;font-size:1.05rem;padding:2px 6px}
-    .track{height:10px;background:var(--bg);border-radius:5px;overflow:hidden;margin:8px 0 2px}
-    .track i{display:block;height:100%;border-radius:5px;transition:width .3s}
-    .cnote{font-size:.8rem;color:var(--muted)}
-    .cnote.over{color:var(--danger);font-weight:600}
-    .newcat{display:flex;gap:8px;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
-    .newcat button{
-      background:none;color:var(--accent);border:1px solid var(--accent);
-      border-radius:10px;padding:0 16px;font:600 .95rem Inter,sans-serif;cursor:pointer;white-space:nowrap
-    }
-    .tools{display:flex;gap:8px;margin-bottom:12px}
-    .tools button{
-      background:none;border:1px solid var(--line);color:var(--ink);
-      border-radius:8px;padding:6px 12px;cursor:pointer;font:inherit;font-size:.85rem
-    }
-    .item{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
-    .item .t{flex:1;min-width:0}
-    .item .t b{display:block;font-weight:500;overflow-wrap:anywhere}
-    .item .t small{color:var(--muted)}
-    .item .a{font-weight:600;font-variant-numeric:tabular-nums}
-    .empty{color:var(--muted);padding:12px 0}
-    .err{color:var(--danger);font-size:.85rem;margin:8px 0 0}
-    .list{margin-top:16px}
-    .pies{display:flex;gap:24px;flex-wrap:wrap;justify-content:center;margin-bottom:16px}
-    .pies figure{margin:0;text-align:center;width:300px;max-width:100%}
-    .pies svg{width:100%;height:auto}
-    .pies figcaption{font-weight:600;margin-top:8px}
-    .pies .sub{color:var(--muted);font-size:.85rem;font-weight:400;display:block}
-    .lrow{
-      display:grid;grid-template-columns:14px 1fr 90px 90px;gap:10px;align-items:center;
-      padding:8px 0;border-top:1px solid var(--line);font-size:.92rem;font-variant-numeric:tabular-nums
-    }
-    .lrow.h{color:var(--muted);font-size:.8rem;border-top:0}
-    .lrow span:nth-child(n+3){text-align:right}
-    .lrow .over{color:var(--danger);font-weight:600}
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ledger – Expense Tracker</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#0b0f14;
+  --surface:linear-gradient(180deg,#172233,#0f1721);
+  --grad:linear-gradient(135deg,#0b8a6b,#1d4fb3);
+  --ink:#e6edf5;
+  --muted:#8a98ab;
+  --line:#232e3d;
+  --accent:#34c38f;
+  --accent2:#6ee7b7;
+  --danger:#ff6b6b;
+  --warn:#ffb703;
+  --good:#34c38f;
+}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{
+  margin:0; min-height:100vh;
+  background:linear-gradient(160deg,#080c11 0%,#0d1623 100%) fixed;
+  color:var(--ink);
+  font:400 16px/1.5 Inter,system-ui,sans-serif;
+}
+.wrap{max-width:920px;margin:0 auto;padding:24px 16px 48px}
+h1,h2,.big{font-family:Inter,system-ui,sans-serif;margin:0}
+h1{font-size:1.5rem;color:var(--accent)}
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.month{display:flex;align-items:center;gap:8px}
+.month button{
+  width:38px;height:38px;border-radius:50%;border:0;background:var(--grad);color:#fff;cursor:pointer;font-size:1.1rem
+}
+.month span{min-width:130px;text-align:center;font-weight:600}
+.total{
+  background:var(--grad);color:#fff;border-radius:14px;padding:24px;margin-bottom:16px
+}
+.total .big{font-size:clamp(2.4rem,9vw,3.6rem);font-weight:700;line-height:1.1}
+.total p{margin:4px 0 0;opacity:.92}
+.bar{height:10px;border-radius:5px;background:rgba(255,255,255,.25);overflow:hidden;margin-top:14px}
+.bar i{display:block;height:100%;background:#fff;width:0;transition:width .3s}
+
+.payment-split{
+  display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0 0 16px;
+}
+.method-box{
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:16px;
+  background:rgba(255,255,255,.02);
+  transition:all .2s ease;
+}
+.method-box.good{
+  border-color:rgba(52,195,143,.8);
+  background:rgba(52,195,143,.08);
+}
+.method-box.warn{
+  border-color:rgba(255,183,3,.9);
+  background:rgba(255,183,3,.08);
+}
+.method-box.danger{
+  border-color:rgba(255,107,107,.8);
+  background:rgba(255,107,107,.08);
+}
+.method-box h3{
+  margin:0 0 10px;
+  color:var(--muted);
+  font-size:.78rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+.method-box .m-amount{
+  font-size:1.6rem;
+  font-weight:700;
+  line-height:1.2;
+}
+.method-box small{
+  display:block;
+  margin-top:8px;
+  color:var(--muted);
+}
+.method-box.danger small{color:var(--danger)}
+.method-box.warn small{color:var(--warn)}
+
+.grid{display:grid;grid-template-columns:1fr 1.2fr;gap:16px;align-items:start}
+@media(max-width:760px){.grid{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px}
+.card h2{font-size:1.05rem;margin-bottom:12px}
+.hint{color:var(--muted);font-size:.85rem;margin:-6px 0 12px}
+.field{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
+.field label{font-size:.85rem;color:var(--muted)}
+input,select{
+  font:inherit;color:var(--ink);background:var(--bg);
+  border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%
+}
+input[type=color]{padding:2px;height:42px;width:56px;cursor:pointer}
+:focus-visible{outline:3px solid var(--accent2);outline-offset:2px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.primary{
+  width:100%;background:var(--grad);color:#fff;border:0;border-radius:10px;
+  padding:12px;font:600 1rem Inter,sans-serif;cursor:pointer
+}
+.secondary{
+  width:100%;background:transparent;border:1px solid var(--line);color:var(--ink);
+  border-radius:10px;padding:10px 12px;font:600 .9rem Inter,sans-serif;cursor:pointer
+}
+
+.method-summary{
+  margin:12px 0 16px;
+  padding:10px 12px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:rgba(255,255,255,.02);
+}
+.method-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:8px 0;
+  border-top:1px solid var(--line);
+  font-size:.92rem;
+}
+.method-row:first-child{border-top:0;padding-top:0}
+.method-row strong{font-weight:600}
+.method-row span{color:var(--muted)}
+.method-row .amt{font-weight:700}
+
+.crow{padding:12px 0;border-top:1px solid var(--line)}
+.crow:first-of-type{border-top:0}
+.ctop{display:flex;align-items:center;gap:10px}
+.dot{width:14px;height:14px;border-radius:50%;flex:none}
+.cname{flex:1;font-weight:600;overflow-wrap:anywhere}
+.cspent{font-variant-numeric:tabular-nums;font-size:.9rem}
+.cbud{width:92px;padding:6px 8px;text-align:right}
+.del{border:0;background:none;color:var(--danger);cursor:pointer;font-size:1.05rem;padding:2px 6px}
+.track{height:10px;background:var(--bg);border-radius:5px;overflow:hidden;margin:8px 0 2px}
+.track i{display:block;height:100%;border-radius:5px;transition:width .3s}
+.cnote{font-size:.8rem;color:var(--muted)}
+.cnote.over{color:var(--danger);font-weight:600}
+.newcat{display:flex;gap:8px;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+.newcat button{
+  background:none;color:var(--accent);border:1px solid var(--accent);
+  border-radius:10px;padding:0 16px;font:600 .95rem Inter,sans-serif;cursor:pointer;white-space:nowrap
+}
+.tools{display:flex;gap:8px;margin-bottom:12px}
+.tools button{
+  background:none;border:1px solid var(--line);color:var(--ink);
+  border-radius:8px;padding:6px 12px;cursor:pointer;font:inherit;font-size:.85rem
+}
+.item{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
+.item .t{flex:1;min-width:0}
+.item .t b{display:block;font-weight:500;overflow-wrap:anywhere}
+.item .t small{color:var(--muted)}
+.item .a{font-weight:600;font-variant-numeric:tabular-nums}
+.empty{color:var(--muted);padding:12px 0}
+.err{color:var(--danger);font-size:.85rem;margin:8px 0 0}
+.list{margin-top:16px}
+.pies{display:flex;gap:24px;flex-wrap:wrap;justify-content:center;margin-bottom:16px}
+.pies figure{margin:0;text-align:center;width:300px;max-width:100%}
+.pies svg{width:100%;height:auto}
+.pies figcaption{font-weight:600;margin-top:8px}
+.pies .sub{color:var(--muted);font-size:.85rem;font-weight:400;display:block}
+.lrow{
+  display:grid;grid-template-columns:14px 1fr 90px 90px;gap:10px;align-items:center;
+  padding:8px 0;border-top:1px solid var(--line);font-size:.92rem;font-variant-numeric:tabular-nums
+}
+.lrow.h{color:var(--muted);font-size:.8rem;border-top:0}
+.lrow span:nth-child(n+3){text-align:right}
+.lrow .over{color:var(--danger);font-weight:600}
+</style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <h1>Ledger</h1>
-      <div class="month">
-        <button id="prev" aria-label="Previous month">‹</button>
-        <span id="monthLabel"></span>
-        <button id="next" aria-label="Next month">›</button>
-      </div>
-    </header>
+<div class="wrap">
+  <header>
+    <h1>Ledger</h1>
+    <div class="month">
+      <button id="prev" aria-label="Previous month">‹</button>
+      <span id="monthLabel"></span>
+      <button id="next" aria-label="Next month">›</button>
+    </div>
+  </header>
 
-    <section class="total">
-      <p>Spent this month</p>
-      <div class="big" id="sum">0.00</div>
-      <p id="incomeNote" style="font-size:.9rem;font-weight:600"></p>
-      <div class="bar"><i id="barFill"></i></div>
-      <p id="budgetNote" style="font-size:.9rem"></p>
-    </section>
+  <section class="total">
+    <p>Spent this month</p>
+    <div class="big" id="sum">0.00</div>
+    <p id="incomeNote" style="font-size:.9rem;font-weight:600"></p>
+    <div class="bar"><i id="barFill"></i></div>
+    <p id="budgetNote" style="font-size:.9rem"></p>
+  </section>
 
-    <div class="grid">
-      <section class="card">
-        <h2>Add expense</h2>
-
-        <div class="field">
-          <label for="desc">Description</label>
-          <input id="desc" placeholder="Lunch, bus fare, rent…">
-        </div>
-
-        <div class="row2">
-          <div class="field">
-            <label for="amount">Amount (use - for income)</label>
-            <input id="amount" type="number" step="any" placeholder="e.g. 25 or -500">
-          </div>
-          <div class="field">
-            <label for="date">Date</label>
-            <input id="date" type="date">
-          </div>
-        </div>
-
-        <div class="field">
-          <label for="cat">Category</label>
-          <select id="cat"></select>
-        </div>
-
-        <div class="field">
-          <label for="method">Payment method</label>
-          <select id="method">
-            <option value="Cash">Cash</option>
-            <option value="Card">Card</option>
-          </select>
-        </div>
-
-        <button class="primary" id="add">Add expense</button>
-        <p class="err" id="msg" role="alert"></p>
-      </section>
-
-      <section class="card">
-        <h2>Categories and budgets</h2>
-        <p class="hint">Set each category's budget at the start of the month. It carries over to later months until you change it.</p>
-        <div id="cats"></div>
-
-        <div class="newcat">
-          <input id="newName" placeholder="New category name" maxlength="24" aria-label="New category name">
-          <input id="newColor" type="color" value="#34c38f" aria-label="Category color">
-          <button id="addCat">Add category</button>
-        </div>
-
-        <p class="err" id="catMsg" role="alert"></p>
-      </section>
+  <div class="payment-split">
+    <div class="method-box" id="cashBox">
+      <h3>Cash</h3>
+      <div class="m-amount" id="cashTotal">0.00</div>
+      <small id="cashLimitNote">No cash limit set</small>
     </div>
 
-    <section class="card list">
-      <h2>Budget vs spent by category</h2>
-      <div class="pies">
-        <figure><div id="pieB"></div><figcaption>Budgeted<span class="sub" id="pieBt"></span></figcaption></figure>
-        <figure><div id="pieS"></div><figcaption>Spent<span class="sub" id="pieSt"></span></figcaption></figure>
+    <div class="method-box" id="cardBox">
+      <h3>Card</h3>
+      <div class="m-amount" id="cardTotal">0.00</div>
+      <small id="cardLimitNote">No card limit set</small>
+    </div>
+  </div>
+
+  <div class="grid">
+    <section class="card">
+      <h2>Add expense</h2>
+
+      <div class="field"><label for="desc">Description</label><input id="desc" placeholder="Lunch, bus fare, rent…"></div>
+
+      <div class="row2">
+        <div class="field"><label for="amount">Amount (use - for income)</label><input id="amount" type="number" step="any" placeholder="e.g. 25 or -500"></div>
+        <div class="field"><label for="date">Date</label><input id="date" type="date"></div>
       </div>
-      <div id="legend"></div>
+
+      <div class="field"><label for="cat">Category</label><select id="cat"></select></div>
+
+      <div class="field">
+        <label for="method">Payment method</label>
+        <select id="method">
+          <option value="Cash">Cash</option>
+          <option value="Card">Card</option>
+        </select>
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <label for="cashLimit">Cash limit</label>
+          <input id="cashLimit" type="number" min="0" step="any" placeholder="0">
+        </div>
+        <div class="field">
+          <label for="cardLimit">Card limit</label>
+          <input id="cardLimit" type="number" min="0" step="any" placeholder="0">
+        </div>
+      </div>
+
+      <button class="secondary" id="resetLimits" style="margin-bottom:12px;">Reset monthly limits</button>
+      <button class="primary" id="add">Add expense</button>
+      <p class="err" id="msg" role="alert"></p>
     </section>
 
-    <section class="card list">
-      <h2>Expenses</h2>
-      <div class="tools">
-        <button id="export">Export CSV</button>
-        <button id="clear">Clear all data</button>
+    <section class="card">
+      <h2>Categories and budgets</h2>
+      <p class="hint">Set each category's budget at the start of the month. It carries over to later months until you change it.</p>
+      <div id="cats"></div>
+
+      <div class="newcat">
+        <input id="newName" placeholder="New category name" maxlength="24" aria-label="New category name">
+        <input id="newColor" type="color" value="#34c38f" aria-label="Category color">
+        <button id="addCat">Add category</button>
       </div>
-      <div id="items"></div>
+
+      <p class="err" id="catMsg" role="alert"></p>
     </section>
   </div>
 
-  <script>
-    const KEY = "ledger:v1";
-    const DEF = {
-      Loans:"#e0645c",
-      "Credit Cards":"#d46ba3",
-      Utilities:"#4f9de0",
-      Fuel:"#8c7ae6",
-      Groceries:"#e0a458",
-      Bakery:"#c9b458",
-      "Vegetables & Fruits":"#34c38f",
-      "Fish & Meat":"#3fb6c9",
-      Other:"#8493a8"
-    };
-    const SEED = {
-      Loans:26390,
-      "Credit Cards":10810,
-      Utilities:3000,
-      Fuel:14000,
-      Groceries:10730,
-      Bakery:2600,
-      "Vegetables & Fruits":12300,
-      "Fish & Meat":9760
-    };
-    const OLD = {
-      Food:["#ff8a00"],
-      Transport:["#0091ff"],
-      Housing:["#8b3dff"],
-      Bills:["#ff3b30"],
-      Shopping:["#ff2d9b"],
-      Health:["#5DE23C","#00c27a"],
-      Fun:["#ffd000"],
-      Other:["#7a8aa0"]
-    };
+  <section class="card list">
+    <h2>Budget vs spent by category</h2>
+    <div class="pies">
+      <figure><div id="pieB"></div><figcaption>Budgeted<span class="sub" id="pieBt"></span></figcaption></figure>
+      <figure><div id="pieS"></div><figcaption>Spent<span class="sub" id="pieSt"></span></figcaption></figure>
+    </div>
+    <div id="legend"></div>
+  </section>
 
-    let data = { expenses:[], cats:{...DEF}, budgets:{} };
-    let view = new Date();
-    view.setDate(1);
+  <section class="card list">
+    <h2>Expenses</h2>
+    <div class="method-summary" id="methodSummary"></div>
+    <div class="tools">
+      <button id="export">Export CSV</button>
+      <button id="clear">Clear all data</button>
+    </div>
+    <div id="items"></div>
+  </section>
+</div>
 
-    const $ = id => document.getElementById(id);
+<script>
+const KEY="ledger:v1";
+const DEF={Loans:"#e0645c","Credit Cards":"#d46ba3",Utilities:"#4f9de0",Fuel:"#8c7ae6",Groceries:"#e0a458",Bakery:"#c9b458","Vegetables & Fruits":"#34c38f","Fish & Meat":"#3fb6c9",Other:"#8493a8"};
+const SEED={Loans:26390,"Credit Cards":10810,Utilities:3000,Fuel:14000,Groceries:10730,Bakery:2600,"Vegetables & Fruits":12300,"Fish & Meat":9760};
+const OLD={Food:["#ff8a00"],Transport:["#0091ff"],Housing:["#8b3dff"],Bills:["#ff3b30"],Shopping:["#ff2d9b"],Health:["#5DE23C","#00c27a"],Fun:["#ffd000"],Other:["#7a8aa0"]};
+const DEFAULT_LIMITS={Cash:0,Card:0};
 
-    try {
-      const p = JSON.parse(localStorage.getItem(KEY) || "null");
-      if (p && Array.isArray(p.expenses)) {
-        data.expenses = p.expenses;
-        data.seeded = !!p.seeded;
-        if (p.cats && typeof p.cats === "object") data.cats = p.cats;
-        if (p.budgets && typeof p.budgets === "object") data.budgets = p.budgets;
-      }
-    } catch (e) {}
+let data={expenses:[],cats:{...DEF},budgets:{},limits:{...DEFAULT_LIMITS}};
+let view=new Date();view.setDate(1);
+const $=id=>document.getElementById(id);
 
-    Object.keys(OLD).forEach(k => {
-      if (DEF[k] && data.cats[k] && OLD[k].includes(data.cats[k])) data.cats[k] = DEF[k];
-    });
+try{
+  const p=JSON.parse(localStorage.getItem(KEY)||"null");
+  if(p&&Array.isArray(p.expenses)){
+    data.expenses=p.expenses;
+    data.seeded=!!p.seeded;
+    if(p.cats&&typeof p.cats==="object")data.cats=p.cats;
+    if(p.budgets&&typeof p.budgets==="object")data.budgets=p.budgets;
+    if(p.limits&&typeof p.limits==="object")data.limits={...DEFAULT_LIMITS,...p.limits};
+  }
+}catch(e){}
 
-    const save = () => {
-      try { localStorage.setItem(KEY, JSON.stringify(data)); } catch (e) {}
-    };
+Object.keys(OLD).forEach(k=>{if(DEF[k]&&data.cats[k]&&OLD[k].includes(data.cats[k]))data.cats[k]=DEF[k]});
 
-    const fmt = n => n.toLocaleString(undefined, { minimumFractionDigits:2, maximumFractionDigits:2 });
-    const ym = d => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
-    const today = () => {
-      const d = new Date();
-      return ym(d) + "-" + String(d.getDate()).padStart(2, "0");
-    };
-    const color = c => c === "Income" ? "#34c38f" : (data.cats[c] || DEF.Other);
-    const shade = (h, a) => {
-      const n = parseInt(h.slice(1), 16);
-      const f = v => Math.max(0, Math.min(255, Math.round(a > 0 ? v + (255 - v) * a : v * (1 + a))));
-      return "#" + [n >> 16 & 255, n >> 8 & 255, n & 255].map(f).map(v => v.toString(16).padStart(2, "0")).join("");
-    };
-    const grad = c => {
-      const h = color(c);
-      return `linear-gradient(135deg,${shade(h,.25)},${shade(h,-.2)})`;
-    };
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(data))}catch(e){}};
+const fmt=n=>n.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+const ym=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
+const today=()=>{const d=new Date();return ym(d)+"-"+String(d.getDate()).padStart(2,"0")};
+const color=c=>c==="Income"?"#34c38f":(data.cats[c]||DEF.Other);
+const shade=(h,a)=>{const n=parseInt(h.slice(1),16),f=v=>Math.max(0,Math.min(255,Math.round(a>0?v+(255-v)*a:v*(1+a))));return "#"+[n>>16&255,n>>8&255,n&255].map(f).map(v=>v.toString(16).padStart(2,"0")).join("")};
+const grad=c=>{const h=color(c);return `linear-gradient(135deg,${shade(h,.25)},${shade(h,-.2)})`};
 
-    function budgetsFor(m) {
-      if (data.budgets[m]) return data.budgets[m];
-      const prev = Object.keys(data.budgets).filter(k => k < m).sort().pop();
-      return prev ? data.budgets[prev] : {};
-    }
+function paymentTotalsFor(list){
+  const totals={Cash:0,Card:0};
+  list.forEach(e=>{
+    if(e.amount>0 && (e.method==="Cash" || e.method==="Card")) totals[e.method]+=e.amount;
+  });
+  return totals;
+}
 
-    function setBudget(c, v) {
-      const m = ym(view);
-      if (!data.budgets[m]) data.budgets[m] = { ...budgetsFor(m) };
-      if (v > 0) data.budgets[m][c] = v;
-      else delete data.budgets[m][c];
-      save();
-    }
+function getLimitState(method, spent){
+  const limit = Number(data.limits[method] || 0);
+  if (!limit) return "good";
+  const p = spent / limit;
+  if (spent > limit) return "danger";
+  if (p >= 0.7) return "warn";
+  return "good";
+}
 
-    function monthList() {
-      return data.expenses.filter(e => e.date.startsWith(ym(view)));
-    }
+function paymentLimitText(method, spent){
+  const limit = Number(data.limits[method] || 0);
+  if (!limit) return `No ${method.toLowerCase()} limit set`;
+  const left = limit - spent;
+  return left >= 0 ? `${fmt(left)} left of ${fmt(limit)}` : `Over by ${fmt(Math.abs(left))}`;
+}
 
-    function spentBy(list) {
-      const by = {};
-      list.forEach(e => {
-        if (e.amount > 0) by[e.cat] = (by[e.cat] || 0) + e.amount;
-      });
-      return by;
-    }
+function renderPaymentSummary(){
+  const totals = paymentTotalsFor(monthList());
 
-    const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]));
+  $("cashTotal").textContent = fmt(totals.Cash);
+  $("cardTotal").textContent = fmt(totals.Card);
+  $("cashLimitNote").textContent = paymentLimitText("Cash", totals.Cash);
+  $("cardLimitNote").textContent = paymentLimitText("Card", totals.Card);
 
-    function pie(items, id) {
-      const VB = 'viewBox="-1.9 -1.35 3.8 2.7"';
-      const total = items.reduce((s, i) => s + i.v, 0);
-      if (!total) {
-        return `<svg ${VB} role="img" aria-label="No data"><circle r="1" fill="none" stroke="var(--line)" stroke-width=".04" stroke-dasharray=".1 .08"/></svg>`;
-      }
+  $("cashBox").classList.remove("good","warn","danger");
+  $("cardBox").classList.remove("good","warn","danger");
+  $("cashBox").classList.add(getLimitState("Cash", totals.Cash));
+  $("cardBox").classList.add(getLimitState("Card", totals.Card));
+}
 
-      const live = items.filter(i => i.v > 0);
-      let body = `<defs><marker id="ar${id}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--ink)"/></marker></defs>`;
-      let a = -Math.PI / 2;
-      const lab = [];
+function renderMethodSummary(){
+  const totals = paymentTotalsFor(monthList());
+  const rows = ["Cash","Card"].map(method => {
+    const spent = totals[method];
+    const limit = Number(data.limits[method] || 0);
+    const label = limit ? `${fmt(spent)} / ${fmt(limit)}` : fmt(spent);
+    return `
+      <div class="method-row">
+        <strong>${method}</strong>
+        <span>${limit ? "Limit" : "Spent"}</span>
+        <div class="amt">${label}</div>
+      </div>
+    `;
+  }).join("");
+  $("methodSummary").innerHTML = rows;
+}
 
-      live.forEach((i, k) => {
-        const b = a + i.v / total * 2 * Math.PI;
-        const m = (a + b) / 2;
-        const l = b - a > Math.PI ? 1 : 0;
-        const pct = Math.round(i.v / total * 100);
-        const tip = `<title>${esc(i.c)}: ${fmt(i.v)} (${pct}%)</title>`;
+// Budgets carry forward: use this month's if set, else the latest earlier month's
+function budgetsFor(m){
+  if(data.budgets[m])return data.budgets[m];
+  const prev=Object.keys(data.budgets).filter(k=>k<m).sort().pop();
+  return prev?data.budgets[prev]:{};
+}
+function setBudget(c,v){
+  const m=ym(view);
+  if(!data.budgets[m])data.budgets[m]={...budgetsFor(m)};
+  if(v>0)data.budgets[m][c]=v;else delete data.budgets[m][c];
+  save();
+}
+function monthList(){return data.expenses.filter(e=>e.date.startsWith(ym(view)))}
+function spentBy(list){const by={};list.forEach(e=>{if(e.amount>0)by[e.cat]=(by[e.cat]||0)+e.amount});return by}
 
-        body += `<linearGradient id="g${id}${k}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${shade(i.col, .25)}"/><stop offset="1" stop-color="${shade(i.col, -.2)}"/></linearGradient>`;
-        body += live.length === 1
-          ? `<circle r="1" fill="url(#g${id}${k})">${tip}</circle>`
-          : `<path d="M0 0L${Math.cos(a)} ${Math.sin(a)}A1 1 0 ${l} 1 ${Math.cos(b)} ${Math.sin(b)}Z" fill="url(#g${id}${k})" stroke="var(--bg)" stroke-width=".02">${tip}</path>`;
-        lab.push({ cx:Math.cos(m), cy:Math.sin(m), y:Math.sin(m) * 1.3, side: Math.cos(m) >= 0 ? 1 : -1, pct });
-        a = b;
-      });
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function pie(items,id){
+  const VB='viewBox="-1.9 -1.35 3.8 2.7"';
+  const t=items.reduce((s,i)=>s+i.v,0);
+  if(!t)return `<svg ${VB} role="img" aria-label="No data"><circle r="1" fill="none" stroke="var(--line)" stroke-width=".04" stroke-dasharray=".1 .08"/></svg>`;
+  const live=items.filter(i=>i.v>0);
+  let body=`<defs><marker id="ar${id}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--ink)"/></marker></defs>`,lab=[],a=-Math.PI/2;
+  live.forEach((i,k)=>{
+    const b=a+i.v/t*2*Math.PI,m=(a+b)/2,l=b-a>Math.PI?1:0,pct=Math.round(i.v/t*100);
+    const tip=`<title>${esc(i.c)}: ${fmt(i.v)} (${pct}%)</title>`;
+    body+=`<linearGradient id="g${id}${k}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${shade(i.col,.25)}"/><stop offset="1" stop-color="${shade(i.col,-.2)}"/></linearGradient>`;
+    body+=live.length===1?`<circle r="1" fill="url(#g${id}${k})">${tip}</circle>`:`<path d="M0 0L${Math.cos(a)} ${Math.sin(a)}A1 1 0 ${l} 1 ${Math.cos(b)} ${Math.sin(b)}Z" fill="url(#g${id}${k})" stroke="var(--bg)" stroke-width=".02">${tip}</path>`;
+    lab.push({cx:Math.cos(m),cy:Math.sin(m),y:Math.sin(m)*1.3,side:Math.cos(m)>=0?1:-1,pct});a=b;
+  });
+  [1,-1].forEach(sd=>{const g=lab.filter(x=>x.side===sd).sort((p,q)=>p.y-q.y);g.forEach((x,k)=>{if(k&&x.y-g[k-1].y<.22)x.y=g[k-1].y+.22;x.y=Math.min(x.y,1.25)})});
+  lab.forEach(x=>{
+    const lx=x.side*1.28;
+    body+=`<line x1="${lx}" y1="${x.y}" x2="${x.cx*.78}" y2="${x.cy*.78}" stroke="var(--ink)" stroke-width=".02" marker-end="url(#ar${id})"/><text x="${lx+x.side*.06}" y="${x.y+.06}" text-anchor="${x.side>0?"start":"end"}" fill="var(--ink)" font-size=".17" font-weight="600">${x.pct}%</text>`;
+  });
+  return `<svg ${VB} role="img" aria-label="Pie chart">${body}</svg>`;
+}
+function renderChart(){
+  const by=spentBy(monthList()),b=budgetsFor(ym(view));
+  const cs=Object.keys(data.cats);
+  const bi=cs.map(c=>({c,col:color(c),v:b[c]||0})),si=cs.map(c=>({c,col:color(c),v:by[c]||0}));
+  const bt=bi.reduce((s,i)=>s+i.v,0),st=si.reduce((s,i)=>s+i.v,0);
+  $("pieB").innerHTML=pie(bi,"B");$("pieS").innerHTML=pie(si,"S");
+  $("pieBt").textContent=bt?"Total "+fmt(bt):"No budgets set";
+  $("pieSt").textContent=st?"Total "+fmt(st):"Nothing spent yet";
+  $("legend").innerHTML='<div class="lrow h"><span></span><span>Category</span><span>Budget</span><span>Spent</span></div>'+cs.map(c=>{const bu=b[c]||0,s=by[c]||0;return `<div class="lrow"><span class="dot" style="background:${grad(c)}"></span><span>${esc(c)}</span><span>${bu?fmt(bu):"–"}</span><span class="${bu&&s>bu?"over":""}">${fmt(s)}</span></div>`}).join("");
+}
+function renderTop(){
+  const list=monthList(),sum=list.reduce((s,e)=>s+(e.amount>0?e.amount:0),0),inc=list.reduce((s,e)=>s+(e.amount<0?-e.amount:0),0),b=budgetsFor(ym(view));
+  const tb=Object.values(b).reduce((s,v)=>s+v,0);
+  $("sum").textContent=fmt(sum);const nt=inc-sum;$("incomeNote").textContent=inc?`Income +${fmt(inc)}  |  Balance ${nt<0?"-":""}${fmt(Math.abs(nt))}`:"Add income as a negative amount, like -500.";
+  $("barFill").style.width=tb?Math.min(100,sum/tb*100)+"%":"0";
+  renderChart();
+  $("budgetNote").textContent=tb?(sum>tb?`Over total budget by ${fmt(sum-tb)}`:`${fmt(tb-sum)} left of ${fmt(tb)}`):"Set category budgets to track progress.";
+}
+function updateBars(){
+  const by=spentBy(monthList()),b=budgetsFor(ym(view));
+  document.querySelectorAll(".crow").forEach(r=>{
+    const c=r.dataset.c,s=by[c]||0,bud=b[c]||0;
+    r.querySelector(".cspent").textContent=fmt(s);
+    r.querySelector(".track i").style.width=bud?Math.min(100,s/bud*100)+"%":(s?"100%":"0");
+    const n=r.querySelector(".cnote");
+    n.textContent=bud?(s>bud?`Over by ${fmt(s-bud)}`:`${fmt(bud-s)} left`):"No budget set";
+    n.className="cnote"+(bud&&s>bud?" over":"");
+  });
+}
+function renderCats(){
+  const b=budgetsFor(ym(view)),used=new Set(data.expenses.map(e=>e.cat));
+  $("cats").innerHTML=Object.keys(data.cats).map(c=>`<div class="crow" data-c="${encodeURIComponent(c)}"><div class="ctop"><span class="dot" style="background:${grad(c)}"></span><span class="cname"></span><span class="cspent"></span><input class="cbud" type="number" min="0" step="any" inputmode="decimal" placeholder="Budget" value="${b[c]||""}" aria-label="Budget"><button class="del" aria-label="Delete category" ${used.has(c)?'disabled style="visibility:hidden"' : ""}>✕</button></div><div class="track"><i style="background:${grad(c)}"></i></div><div class="cnote"></div></div>`).join("");
+  document.querySelectorAll(".crow").forEach(r=>{const c=decodeURIComponent(r.dataset.c);r.dataset.c=c;r.querySelector(".cname").textContent=c;r.querySelector(".cbud").setAttribute("aria-label","Budget for "+c)});
+  updateBars();
+  const cur=$("cat").value;
+  $("cat").innerHTML=Object.keys(data.cats).map(c=>`<option></option>`).join("");
+  [...$("cat").options].forEach((o,i)=>{o.textContent=o.value=Object.keys(data.cats)[i]});
+  if(data.cats[cur])$("cat").value=cur;
+}
+function renderItems(){
+  const list=monthList().sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id);
+  $("items").innerHTML=list.length?list.map(e=>{
+    const method=e.method||"Cash";
+    return `<div class="item"><span class="dot" style="background:${grad(e.cat)}"></span><div class="t"><b>${esc(e.desc)}</b><small>${esc(e.cat)} · ${esc(method)} · ${esc(e.date)}</small></div><span class="a" style="${e.amount<0?"color:var(--accent)":"margin-right:4px"}">${e.amount<0?"+":""}${fmt(Math.abs(e.amount))}</span><button class="del" data-id="${e.id}" aria-label="Delete expense">✕</button></div>`;
+  }).join(""):'<div class="empty">No expenses this month. Add one using the form.</div>';
+}
+function renderLimits(){
+  $("cashLimit").value=Number(data.limits.Cash||0);
+  $("cardLimit").value=Number(data.limits.Card||0);
+}
+function render(){
+  $("monthLabel").textContent=view.toLocaleDateString(undefined,{month:"long",year:"numeric"});
+  renderTop();
+  renderPaymentSummary();
+  renderMethodSummary();
+  renderLimits();
+  renderCats();
+  renderItems();
+}
 
-      [1, -1].forEach(sd => {
-        const g = lab.filter(x => x.side === sd).sort((p, q) => p.y - q.y);
-        g.forEach((x, k) => {
-          if (k && x.y - g[k - 1].y < .22) x.y = g[k - 1].y + .22;
-          x.y = Math.min(x.y, 1.25);
-        });
-      });
+$("cat").innerHTML="";
+$("date").value=today();
+$("method").value="Cash";
 
-      lab.forEach(x => {
-        const lx = x.side * 1.28;
-        body += `<line x1="${lx}" y1="${x.y}" x2="${x.cx * .78}" y2="${x.cy * .78}" stroke="var(--ink)" stroke-width=".02" marker-end="url(#ar${id})"/>`;
-        body += `<text x="${lx + x.side * .06}" y="${x.y + .06}" text-anchor="${x.side > 0 ? "start" : "end"}" fill="var(--ink)" font-size=".17" font-weight="600">${x.pct}%</text>`;
-      });
+$("add").onclick=()=>{
+  const desc=$("desc").value.trim(),amount=parseFloat($("amount").value),date=$("date").value,method=$("method").value;
+  if(!desc||!amount||!date){$("msg").textContent="Enter a description, a non-zero amount (use - for income), and a date.";return}
+  $("msg").textContent="";
+  data.expenses.push({id:Date.now(),desc,amount,date,cat:amount<0?"Income":$("cat").value,method});
+  save();
+  $("desc").value="";
+  $("amount").value="";
+  $("method").value="Cash";
+  view=new Date(date+"T00:00");view.setDate(1);
+  render();
+  $("desc").focus();
+};
 
-      return `<svg ${VB} role="img" aria-label="Pie chart">${body}</svg>`;
-    }
+$("items").onclick=e=>{
+  const id=e.target.dataset&&e.target.dataset.id;
+  if(!id)return;
+  data.expenses=data.expenses.filter(x=>String(x.id)!==id);
+  save();
+  render();
+};
 
-    function renderChart() {
-      const by = spentBy(monthList());
-      const b = budgetsFor(ym(view));
-      const cs = Object.keys(data.cats);
+$("cats").oninput=e=>{
+  if(!e.target.classList.contains("cbud"))return;
+  setBudget(e.target.closest(".crow").dataset.c,parseFloat(e.target.value)||0);
+  renderTop();
+  updateBars();
+};
 
-      const bi = cs.map(c => ({ c, col:color(c), v:b[c] || 0 }));
-      const si = cs.map(c => ({ c, col:color(c), v:by[c] || 0 }));
-      const bt = bi.reduce((s, i) => s + i.v, 0);
-      const st = si.reduce((s, i) => s + i.v, 0);
+$("cats").onclick=e=>{
+  if(!e.target.classList.contains("del"))return;
+  const c=e.target.closest(".crow").dataset.c;
+  delete data.cats[c];
+  Object.values(data.budgets).forEach(b=>delete b[c]);
+  save();
+  render();
+};
 
-      $("pieB").innerHTML = pie(bi, "B");
-      $("pieS").innerHTML = pie(si, "S");
-      $("pieBt").textContent = bt ? "Total " + fmt(bt) : "No budgets set";
-      $("pieSt").textContent = st ? "Total " + fmt(st) : "Nothing spent yet";
+$("cashLimit").oninput=e=>{
+  data.limits.Cash=Number(e.target.value)||0;
+  save();
+  renderPaymentSummary();
+  renderMethodSummary();
+};
 
-      $("legend").innerHTML =
-        '<div class="lrow h"><span></span><span>Category</span><span>Budget</span><span>Spent</span></div>' +
-        cs.map(c => {
-          const bu = b[c] || 0;
-          const s = by[c] || 0;
-          return `<div class="lrow"><span class="dot" style="background:${grad(c)}"></span><span>${esc(c)}</span><span>${bu ? fmt(bu) : "–"}</span><span class="${bu && s > bu ? "over" : ""}">${fmt(s)}</span></div>`;
-        }).join("");
-    }
+$("cardLimit").oninput=e=>{
+  data.limits.Card=Number(e.target.value)||0;
+  save();
+  renderPaymentSummary();
+  renderMethodSummary();
+};
 
-    function renderTop() {
-      const list = monthList();
-      const sum = list.reduce((s, e) => s + (e.amount > 0 ? e.amount : 0), 0);
-      const inc = list.reduce((s, e) => s + (e.amount < 0 ? -e.amount : 0), 0);
-      const b = budgetsFor(ym(view));
-      const tb = Object.values(b).reduce((s, v) => s + v, 0);
+$("resetLimits").onclick=()=>{
+  data.limits={...DEFAULT_LIMITS};
+  save();
+  renderPaymentSummary();
+  renderMethodSummary();
+  renderLimits();
+};
 
-      $("sum").textContent = fmt(sum);
-      const nt = inc - sum;
-      $("incomeNote").textContent = inc
-        ? `Income +${fmt(inc)}  |  Balance ${nt < 0 ? "-" : ""}${fmt(Math.abs(nt))}`
-        : "Add income as a negative amount, like -500.";
+$("addCat").onclick=()=>{
+  const n=$("newName").value.trim();
+  if(!n){$("catMsg").textContent="Enter a name for the category.";return}
+  if(Object.keys(data.cats).some(k=>k.toLowerCase()===n.toLowerCase())){$("catMsg").textContent="That category already exists.";return}
+  $("catMsg").textContent="";
+  data.cats[n]=$("newColor").value;
+  save();
+  $("newName").value="";
+  renderCats();
+  $("cat").value=n;
+};
 
-      $("barFill").style.width = tb ? Math.min(100, sum / tb * 100) + "%" : "0";
-      renderChart();
+$("prev").onclick=()=>{view.setMonth(view.getMonth()-1);render()};
+$("next").onclick=()=>{view.setMonth(view.getMonth()+1);render()};
+$("clear").onclick=()=>{if(confirm("Delete all expenses, categories and budgets?")){data={expenses:[],cats:{...DEF},budgets:{},limits:{...DEFAULT_LIMITS},seeded:true};save();render()}};
 
-      $("budgetNote").textContent = tb
-        ? (sum > tb ? `Over total budget by ${fmt(sum - tb)}` : `${fmt(tb - sum)} left of ${fmt(tb)}`)
-        : "Set category budgets to track progress.";
-    }
+$("export").onclick=()=>{
+  const q=s=>'\"'+String(s).replace(/\"/g,'\"\"')+'\"';
+  const csv="Date,Description,Category,Payment Method,Amount\n"+data.expenses.map(e=>[e.date,q(e.desc),q(e.cat),q(e.method||"Cash"),e.amount].join(",")).join("\n");
+  const w=window.open("","_blank");
+  if(w){w.document.title="expenses.csv";const pre=w.document.createElement("pre");pre.textContent=csv;w.document.body.appendChild(pre)}
+  else alert("Pop-up blocked. Allow pop-ups to view the CSV.");
+};
 
-    function updateBars() {
-      const by = spentBy(monthList());
-      const b = budgetsFor(ym(view));
+if(!data.seeded){
+  ["Food","Transport","Housing","Bills","Shopping","Health","Fun"].forEach(k=>{if(!data.expenses.some(e=>e.cat===k))delete data.cats[k]});
+  Object.keys(DEF).forEach(k=>{if(!data.cats[k])data.cats[k]=DEF[k]});
+  if(!Object.keys(data.budgets).length)data.budgets[ym(new Date())]={...SEED};
+  data.seeded=true;save();
+}
 
-      document.querySelectorAll(".crow").forEach(r => {
-        const c = r.dataset.c;
-        const s = by[c] || 0;
-        const bud = b[c] || 0;
-
-        r.querySelector(".cspent").textContent = fmt(s);
-        r.querySelector(".track i").style.width = bud ? Math.min(100, s / bud * 100) + "%" : (s ? "100%" : "0");
-
-        const n = r.querySelector(".cnote");
-        n.textContent = bud ? (s > bud ? `Over by ${fmt(s - bud)}` : `${fmt(bud - s)} left`) : "No budget set";
-        n.className = "cnote" + (bud && s > bud ? " over" : "");
-      });
-    }
-
-    function renderCats() {
-      const b = budgetsFor(ym(view));
-      const used = new Set(data.expenses.map(e => e.cat));
-      $("cats").innerHTML = Object.keys(data.cats).map(c => `
-        <div class="crow" data-c="${encodeURIComponent(c)}">
-          <div class="ctop">
-            <span class="dot" style="background:${grad(c)}"></span>
-            <span class="cname"></span>
-            <span class="cspent"></span>
-            <input class="cbud" type="number" min="0" step="any" inputmode="decimal" placeholder="Budget" value="${b[c] || ""}" aria-label="Budget">
-            <button class="del" aria-label="Delete category" ${used.has(c) ? 'disabled style="visibility:hidden"' : ""}>✕</button>
-          </div>
-          <div class="track"><i style="background:${grad(c)}"></i></div>
-          <div class="cnote"></div>
-        </div>
-      `).join("");
-
-      document.querySelectorAll(".crow").forEach(r => {
-        const c = decodeURIComponent(r.dataset.c);
-        r.dataset.c = c;
-        r.querySelector(".cname").textContent = c;
-        r.querySelector(".cbud").setAttribute("aria-label", "Budget for " + c);
-      });
-
-      updateBars();
-
-      const cur = $("cat").value;
-      $("cat").innerHTML = Object.keys(data.cats).map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join("");
-      if (data.cats[cur]) $("cat").value = cur;
-    }
-
-    function renderItems() {
-      const list = monthList().sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
-      $("items").innerHTML = list.length
-        ? list.map(e => {
-            const method = e.method || "Cash";
-            return `
-              <div class="item">
-                <span class="dot" style="background:${grad(e.cat)}"></span>
-                <div class="t">
-                  <b>${esc(e.desc)}</b>
-                  <small>${esc(e.cat)} · ${esc(method)} · ${esc(e.date)}</small>
-                </div>
-                <span class="a" style="${e.amount < 0 ? 'color:var(--accent)' : ''}">
-                  ${e.amount < 0 ? "+" : ""}${fmt(Math.abs(e.amount))}
-                </span>
-                <button class="del" data-id="${e.id}" aria-label="Delete expense">✕</button>
-              </div>
-            `;
-          }).join("")
-        : '<div class="empty">No expenses this month. Add one using the form.</div>';
-    }
-
-    function render() {
-      $("monthLabel").textContent = view.toLocaleDateString(undefined, { month:"long", year:"numeric" });
-      renderTop();
-      renderCats();
-      renderItems();
-    }
-
-    $("cat").innerHTML = "";
-    $("date").value = today();
-    $("method").value = "Cash";
-
-    $("add").onclick = () => {
-      const desc = $("desc").value.trim();
-      const amount = parseFloat($("amount").value);
-      const date = $("date").value;
-      const method = $("method").value;
-
-      if (!desc || !amount || !date) {
-        $("msg").textContent = "Enter a description, a non-zero amount (use - for income), and a date.";
-        return;
-      }
-
-      $("msg").textContent = "";
-      data.expenses.push({
-        id: Date.now(),
-        desc,
-        amount,
-        date,
-        cat: amount < 0 ? "Income" : $("cat").value,
-        method: method || "Cash"
-      });
-
-      save();
-      $("desc").value = "";
-      $("amount").value = "";
-      $("method").value = "Cash";
-
-      view = new Date(date + "T00:00");
-      view.setDate(1);
-
-      render();
-      $("desc").focus();
-    };
-
-    $("items").onclick = e => {
-      const id = e.target.dataset && e.target.dataset.id;
-      if (!id) return;
-      data.expenses = data.expenses.filter(x => String(x.id) !== id);
-      save();
-      render();
-    };
-
-    $("cats").oninput = e => {
-      if (!e.target.classList.contains("cbud")) return;
-      setBudget(e.target.closest(".crow").dataset.c, parseFloat(e.target.value) || 0);
-      renderTop();
-      updateBars();
-    };
-
-    $("cats").onclick = e => {
-      if (!e.target.classList.contains("del")) return;
-      const c = e.target.closest(".crow").dataset.c;
-      delete data.cats[c];
-      Object.values(data.budgets).forEach(b => delete b[c]);
-      save();
-      render();
-    };
-
-    $("addCat").onclick = () => {
-      const n = $("newName").value.trim();
-      if (!n) {
-        $("catMsg").textContent = "Enter a name for the category.";
-        return;
-      }
-      if (Object.keys(data.cats).some(k => k.toLowerCase() === n.toLowerCase())) {
-        $("catMsg").textContent = "That category already exists.";
-        return;
-      }
-      $("catMsg").textContent = "";
-      data.cats[n] = $("newColor").value;
-      save();
-      $("newName").value = "";
-      renderCats();
-      $("cat").value = n;
-    };
-
-    $("prev").onclick = () => {
-      view.setMonth(view.getMonth() - 1);
-      render();
-    };
-
-    $("next").onclick = () => {
-      view.setMonth(view.getMonth() + 1);
-      render();
-    };
-
-    $("clear").onclick = () => {
-      if (confirm("Delete all expenses, categories and budgets?")) {
-        data = { expenses:[], cats:{...DEF}, budgets:{}, seeded:true };
-        save();
-        render();
-      }
-    };
-
-    $("export").onclick = () => {
-      const q = s => '"' + String(s).replace(/"/g, '""') + '"';
-      const csv =
-        "Date,Description,Category,Payment Method,Amount\n" +
-        data.expenses.map(e =>
-          [e.date, q(e.desc), q(e.cat), q(e.method || "Cash"), e.amount].join(",")
-        ).join("\n");
-
-      const w = window.open("", "_blank");
-      if (w) {
-        w.document.title = "expenses.csv";
-        const pre = w.document.createElement("pre");
-        pre.textContent = csv;
-        w.document.body.appendChild(pre);
-      } else {
-        alert("Pop-up blocked. Allow pop-ups to view the CSV.");
-      }
-    };
-
-    if (!data.seeded) {
-      ["Food", "Transport", "Housing", "Bills", "Shopping", "Health", "Fun"].forEach(k => {
-        if (!data.expenses.some(e => e.cat === k)) delete data.cats[k];
-      });
-
-      Object.keys(DEF).forEach(k => {
-        if (!data.cats[k]) data.cats[k] = DEF[k];
-      });
-
-      if (!Object.keys(data.budgets).length) data.budgets[ym(new Date())] = { ...SEED };
-
-      data.seeded = true;
-      save();
-    }
-
-    render();
-  </script>
+render();
+</script>
 </body>
 </html>
